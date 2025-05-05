@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.orm import Session
-from app.schemas.user_schema import UserRegister, UserLogin
+from app.schemas.user_schema import UserRegister, UserLogin, UserResponse
 from app.services.auth_services import register_user, login_user, delete_user_account
 from app.crud.users import update_users
 from app.core.database import get_db
@@ -14,14 +14,33 @@ router = APIRouter()
     1.Add Response Models 
 """
 
-def check_user(role):
-    if role!="user":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only Users are allowed.")
 
-@router.get("/user")
-def User(user:UserModel=Depends(get_current_user)):
-    check_user(user.role)
-    return {"name": user.name, "email":user.email}
+def check_user(role):
+    if role != "user":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Only Users are allowed."
+        )
+
+
+def validate_fields(email: str, password: str):
+    if not email and not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please Provide an email or password to update.",
+        )
+
+
+def authorize_user(data_id, user_id):
+    if data_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized."
+        )
+
+
+@router.get("/user", response_model=UserResponse)
+def User(user: UserModel = Depends(get_current_user)):
+
+    return UserResponse(name=user.name, email=user.email)
 
 
 @router.post("/register", summary="Create a new account/Register a new user.")
@@ -38,11 +57,7 @@ def login(
     _: None = Depends(is_logged_in),
     db: Session = Depends(get_db),
 ):
-    if not user.email or not user.password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Fields should not be empty.",
-        )
+    validate_fields(user.email, user.password)
     return login_user(user, response, db)
 
 
@@ -54,15 +69,8 @@ def update_user_info(
     db: Session = Depends(get_db),
 ):
     check_user(data.role)
-    if not user.email and not user.password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please Provide an email or password to update.",
-        )
-    if data.id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized."
-        )
+    validate_fields(user.email, user.password)
+    authorize_user(data.id, user_id)
     return update_users(user, data, db)
 
 
@@ -74,19 +82,13 @@ def delete_user(
     db: Session = Depends(get_db),
 ):
     check_user(data.role)
-    if not user.email or not user.password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Fields can't be empty"
-        )
-    if data.id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized"
-        )
+    validate_fields(user.email, user.password)
+    authorize_user(data.id, user_id)
     return delete_user_account(user, db)
 
 
 @router.post("/logout")
 def logout_user(response: Response, data: UserModel = Depends(get_current_user)):
-    check_user(data.role)
+
     response.delete_cookie("access_token")
     return {"message": "Logout Successfully."}
