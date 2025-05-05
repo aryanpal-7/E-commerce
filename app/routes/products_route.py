@@ -25,18 +25,18 @@ def check_admin(role):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Only Admins are allowed."
         )
 
-def validate_fields(product_name,price,stock):
-    if (
-            not product_name
-            or  price<0
-            or  stock<0
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid details or Details are missing"
-            )
+
+def validate_fields(product_name, price, stock):
+    if not product_name or price < 0 or stock < 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid details or Details are missing",
+        )
+
+
 @router.get("/products", response_model=List[ProductOut])
 def get_all_product(db: Session = Depends(get_db)):
-    data=db.query(ProductModel).all()
+    data = db.query(ProductModel).all()
 
     return data
 
@@ -48,7 +48,9 @@ def add_products_info(
     db: Session = Depends(get_db),
 ):
     check_admin(user.role)
-    validate_fields(product_details.product_name,product_details.price,product_details.stock)
+    validate_fields(
+        product_details.product_name, product_details.price, product_details.stock
+    )
     return add_products(product_details, user.id, db)
 
 
@@ -60,7 +62,9 @@ def update_product_info(
     db: Session = Depends(get_db),
 ):
     check_admin(user.role)
-    validate_fields(product_details.product_name,product_details.price,product_details.stock)
+    validate_fields(
+        product_details.product_name, product_details.price, product_details.stock
+    )
     return update_product(product_details, product_id, db)
 
 

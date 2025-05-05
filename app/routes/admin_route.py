@@ -14,7 +14,7 @@ def add_admin(
     _: None = Depends(is_logged_in),
     db: Session = Depends(get_db),
 ):
-    
+
     if (
         not admin_info.email
         or not admin_info.password
