@@ -20,9 +20,9 @@ def register_user(user, db):
 
 def login_user(user, response, db):
     try:
-        data = db.query(UserModel).filter(UserModel.email == user.email).first()
+        data = db.query(UserModel).filter(UserModel.email == user.email, UserModel.role=="user").first()
         if not data:
-            raise_http(status.HTTP_404_NOT_FOUND, "User doesn't exist.")
+            raise_http(status.HTTP_404_NOT_FOUND, "User doesn't exists.")
         check_pwd = verify_pwd(user.password, data.password)
         if not check_pwd:
             raise_http(status.HTTP_400_BAD_REQUEST, "Password incorrect.")

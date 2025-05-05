@@ -9,6 +9,8 @@ def add_user(user, db):
     try:
         hashed_pwd = hash_pwd(user.password)
         data = UserModel(name=user.name, email=user.email, password=hashed_pwd)
+        if user.role:
+            data.role=user.role
         db.add(data)
         db.commit()
         db.refresh(data)

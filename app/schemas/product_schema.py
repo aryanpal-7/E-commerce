@@ -5,3 +5,4 @@ class ProductDetails(BaseModel):
     product_name: str
     price: float
     stock: int
+

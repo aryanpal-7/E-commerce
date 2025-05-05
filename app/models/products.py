@@ -9,5 +9,7 @@ class ProductModel(Base):
     product_name = Column(String, unique=True, nullable=False)
     stock = Column(Integer, nullable=False)
     price = Column(FLOAT, nullable=False)
-
+    owner_id=Column(Integer,ForeignKey("users.id"), nullable=False)
+    
+    admin=relationship("UserModel", back_populates="admin_id")
     cart = relationship("CartModel", back_populates="product")
