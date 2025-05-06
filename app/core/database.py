@@ -3,7 +3,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 URL = "postgresql://postgres:root1@localhost:5432/ecommerce_db"
-engine = create_engine(URL, echo=True)
+engine = create_engine(URL)
 sessionLocal = sessionmaker(autoflush=False, autocommit=False, bind=engine)
 Base = declarative_base()
 
