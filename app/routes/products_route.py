@@ -6,7 +6,7 @@
 
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.schemas.product_schema import ProductDetails, ProductOut
 from app.core.database import get_db
@@ -35,9 +35,12 @@ def validate_fields(product_name, price, stock):
 
 
 @router.get("/products", response_model=List[ProductOut])
-def get_all_product(db: Session = Depends(get_db)):
-    data = db.query(ProductModel).all()
-
+def get_all_product(
+    limit: int = Query(10, gt=0),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+):
+    data = db.query(ProductModel).offset(offset).limit(limit).all()
     return data
 
 

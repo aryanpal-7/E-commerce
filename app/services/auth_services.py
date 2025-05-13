@@ -38,11 +38,11 @@ def login_user(user, response, db):
         raise_http(status.HTTP_500_INTERNAL_SERVER_ERROR, "Database error.")
 
 
-def delete_user_account(user, db):
+def delete_user_account(user, response, db):
     user_data = db.query(UserModel).filter(UserModel.email == user.email).first()
     if not user_data:
         raise_http(status.HTTP_404_NOT_FOUND, "User not found")
     check_pwd = verify_pwd(user.password, user_data.password)
     if not check_pwd:
         raise_http(status.HTTP_400_BAD_REQUEST, "Password Incorrect.")
-    return delete_users(user_data, db)
+    return delete_users(user_data, response, db)

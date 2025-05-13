@@ -11,5 +11,12 @@ class UserModel(Base):
     password = Column(String, nullable=False)
     role = Column(String, nullable=False, default="user")
 
-    admin_id = relationship("ProductModel", back_populates="admin")
-    cart = relationship("CartModel", back_populates="owner")
+    admin_id = relationship(
+        "ProductModel", back_populates="admin", cascade="all, delete-orphan"
+    )
+    cart = relationship(
+        "CartModel", back_populates="owner", cascade="all, delete-orphan"
+    )
+    order = relationship(
+        "OrderModel", back_populates="ownerorder", cascade="all, delete-orphan"
+    )

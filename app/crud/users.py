@@ -42,10 +42,11 @@ def update_users(user, data, db):
         )
 
 
-def delete_users(user_obj, db):
+def delete_users(user_obj, response, db):
     try:
         db.delete(user_obj)
         db.commit()
+        response.delete_cookie("access_token")
         return {"message": "User Deleted Successfully."}
     except OperationalError as e:
         db.rollback()

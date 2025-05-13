@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 
 class CartDetails(BaseModel):
@@ -8,8 +9,15 @@ class CartDetails(BaseModel):
 
 
 class CartOut(BaseModel):
-    Seller: str
+    seller: str
     product_name: str
     product_id: int
     owner: str
-    stock: int
+    quantity: int
+    price: float
+    item_total: float
+
+
+class CartResponse(BaseModel):
+    cart_items: List[CartOut]
+    cart_total: float

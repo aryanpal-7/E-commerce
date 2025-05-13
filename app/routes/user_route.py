@@ -78,13 +78,14 @@ def update_user_info(
 def delete_user(
     user_id: int,
     user: UserLogin,
+    response: Response,
     data: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     check_user(data.role)
     validate_fields(user.email, user.password)
     authorize_user(data.id, user_id)
-    return delete_user_account(user, db)
+    return delete_user_account(user, response, db)
 
 
 @router.post("/logout")

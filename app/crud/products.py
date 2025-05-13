@@ -1,5 +1,6 @@
 from app.models.products import ProductModel
 from fastapi import HTTPException, status
+from app.schemas.product_schema import ProductDetails
 
 
 def add_product(product_detail, id, db):
@@ -23,12 +24,14 @@ def add_product(product_detail, id, db):
         )
 
 
-def update_product_info(product_detail, data, db):
+def update_product_info(product_detail: ProductDetails, data, db):
+
     if product_detail.product_name:
         data.product_name = product_detail.product_name
-    if product_detail.price:
+    if product_detail.price >= 0:
         data.price = product_detail.price
-    if product_detail.stock:
+
+    if product_detail.stock >= 0:
         data.stock = product_detail.stock
     db.commit()
     db.refresh(data)
