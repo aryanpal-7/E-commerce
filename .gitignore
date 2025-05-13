@@ -6,3 +6,6 @@ env/
 
 alembic
 alembic.ini
+.alembic
+/alembic
+/alembic.ini
