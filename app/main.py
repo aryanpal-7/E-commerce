@@ -8,8 +8,8 @@ from app.routes.order_route import router as OrderRouter
 app = FastAPI()
 
 
-app.include_router(UserRouter, tags=["Users Routes."])
-app.include_router(ProductRouter, tags=["Product Routes."])
-app.include_router(AdminRouter, tags=["Admin Routes."])
-app.include_router(CartRouter, tags=["Cart Routes."])
-app.include_router(OrderRouter, tags=["Order Routes."])
+app.include_router(UserRouter, prefix="/users", tags=["Users Routes."])
+app.include_router(ProductRouter,prefix="/products", tags=["Product Routes."])
+app.include_router(AdminRouter,prefix="/admin", tags=["Admin Routes."])
+app.include_router(CartRouter,prefix="/cart", tags=["Cart Routes."])
+app.include_router(OrderRouter,prefix="/order", tags=["Order Routes."])

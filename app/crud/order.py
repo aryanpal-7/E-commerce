@@ -19,19 +19,8 @@ def add_order(product_data: ProductModel, user_data, quantity, db):
     db.add(data)
     db.commit()
     db.refresh(data)
-    # newStock = product_data.stock - quantity
-    # update_product_info(
-    #     product_detail=ProductDetails(
-    #         product_name=product_data.product_name,
-    #         price=product_data.price,
-    #         stock=newStock,
-    #     ),
-    #     data=product_data,
-    #     db=db,
-    # )
     return {
-        "message": "Order Placed Successfully",
-        "order_details": OrderOutput.model_validate(data),
+        "message": "Order Placed Successfully"
     }
 
 

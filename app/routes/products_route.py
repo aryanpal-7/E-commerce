@@ -1,13 +1,6 @@
-"""
-1. Add Products Route only for admin roles. ~
-2. Retrieve all Products.~
-3. Update Product Details like stock etc.
-4. Delete a Product.
-
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from app.schemas.product_schema import ProductDetails, ProductOut
 from app.core.database import get_db
 from app.services.product_services import add_products, update_product, delete_product
@@ -34,7 +27,7 @@ def validate_fields(product_name, price, stock):
         )
 
 
-@router.get("/products", response_model=List[ProductOut])
+@router.get("/all", response_model=List[ProductOut])
 def get_all_product(
     limit: int = Query(10, gt=0),
     offset: int = Query(0, ge=0),
@@ -44,7 +37,7 @@ def get_all_product(
     return data
 
 
-@router.post("/addproducts")
+@router.post("/add")
 def add_products_info(
     product_details: ProductDetails,
     user: UserModel = Depends(get_current_user),
@@ -54,10 +47,12 @@ def add_products_info(
     validate_fields(
         product_details.product_name, product_details.price, product_details.stock
     )
+    
     return add_products(product_details, user.id, db)
+    
 
 
-@router.put("/updateproduct/{product_id}")
+@router.put("/update/{product_id}")
 def update_product_info(
     product_id: int,
     product_details: ProductDetails,
@@ -68,10 +63,11 @@ def update_product_info(
     validate_fields(
         product_details.product_name, product_details.price, product_details.stock
     )
+    
     return update_product(product_details, product_id, db)
 
 
-@router.delete("/deleteproduct/{product_id}")
+@router.delete("/delete/{product_id}")
 def delete_product_info(
     product_id: int,
     user: UserModel = Depends(get_current_user),

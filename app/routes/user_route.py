@@ -61,7 +61,7 @@ def login(
     return login_user(user, response, db)
 
 
-@router.put("/user/{user_id}", summary="Update user's info")
+@router.put("/update/{user_id}", summary="Update user's info")
 def update_user_info(
     user_id: int,
     user: UserLogin,
@@ -74,7 +74,7 @@ def update_user_info(
     return update_users(user, data, db)
 
 
-@router.delete("/user/{user_id}", summary="Delete user's account.")
+@router.delete("/delete/{user_id}", summary="Delete user's account.")
 def delete_user(
     user_id: int,
     user: UserLogin,

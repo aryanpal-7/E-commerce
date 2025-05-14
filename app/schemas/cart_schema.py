@@ -20,4 +20,4 @@ class CartOut(BaseModel):
 
 class CartResponse(BaseModel):
     cart_items: List[CartOut]
-    cart_total: float
+    cart_total_price: float

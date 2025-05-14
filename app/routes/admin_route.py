@@ -5,10 +5,10 @@ from app.schemas.user_schema import AdminSchema, UserLogin
 from app.services.admin_services import register_admin, login_admin
 from app.core.security import is_logged_in
 
-router = APIRouter()
+router = APIRouter(prefix="/admin")
 
 
-@router.post("/admin/register")
+@router.post("/register")
 def add_admin(
     admin_info: AdminSchema,
     _: None = Depends(is_logged_in),
@@ -27,7 +27,7 @@ def add_admin(
     return register_admin(admin_info, db)
 
 
-@router.post("/admin/login")
+@router.post("/login")
 def login_admin_account(
     admin_info: UserLogin,
     response: Response,

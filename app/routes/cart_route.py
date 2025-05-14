@@ -53,7 +53,7 @@ def get_cart_items(
     ]
     total_price = sum(item.product.price * item.quantity for item in data)
 
-    return CartResponse(cart_items=cart_items, cart_total=total_price)
+    return CartResponse(cart_items=cart_items, cart_total_price=total_price)
 
 
 @router.put("/update/{product_id}")
