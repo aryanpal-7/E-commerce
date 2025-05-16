@@ -3,9 +3,10 @@ from typing import List
 
 
 class CartDetails(BaseModel):
-    # product_id: int
     quantity: int
-    # owner_id: int
+
+    class Config:
+        json_schema_extra = {"example": {"quantity": 10}}
 
 
 class CartOut(BaseModel):

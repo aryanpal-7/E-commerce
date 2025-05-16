@@ -36,7 +36,7 @@ class OrderModel(Base):
 
 
 @event.listens_for(OrderModel, "before_delete")
-def restore_stock_before_delete(mapper, connection, target):
+def restore_stock_before_delete(mapper, connection, target) -> None:
     """BEFORE DELETE EVENT"""
     session = Session(bind=connection)
     product = (
@@ -48,7 +48,7 @@ def restore_stock_before_delete(mapper, connection, target):
 
 
 @event.listens_for(OrderModel, "before_insert")
-def update_stock_before_insert(mapper, connection, target):
+def update_stock_before_insert(mapper, connection, target) -> None:
     """BEFORE INSERT EVENT"""
     session = Session(bind=connection)
     product = (

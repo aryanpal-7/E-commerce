@@ -25,10 +25,14 @@ class UserResponse(BaseModel):
     email: str
 
 
-# Using this pydantic model to request and validate user Login details
 class UserLogin(BaseModel):
     email: str
     password: str = Field(..., min_length=5, max_length=18)
+
+    class Config:
+        json_schema_extra = {
+            "example": {"email": "example@gmail.com", "password": "Strong@123"}
+        }
 
 
 class AdminSchema(UserRegister):

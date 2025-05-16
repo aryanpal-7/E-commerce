@@ -1,9 +1,26 @@
 from app.models.products import ProductModel
 from fastapi import HTTPException, status
 from app.schemas.product_schema import ProductDetails
+from sqlalchemy.orm import Session
 
 
-def add_product(product_detail, id, db):
+def add_product(product_detail: ProductModel, id: int, db: Session):
+    """
+    Adds a new product to the database.
+
+    Args:
+        product_detail (ProductModel): The product details to be added.
+        id (int): The owner's ID.
+        db (Session): The database session.
+
+    Returns:
+        dict: A dictionary containing a success message and the product details.
+
+    Raises:
+        HTTPException: If an error occurs while adding the product, an HTTPException
+                       with a 500 status code is raised, indicating an internal server error.
+    """
+
     try:
 
         data = ProductModel(
@@ -24,7 +41,20 @@ def add_product(product_detail, id, db):
         )
 
 
-def update_product_info(product_detail: ProductDetails, data, db):
+def update_product_info(
+    product_detail: ProductDetails, data: ProductModel, db: Session
+):
+    """
+    Updates the product details in the database.
+
+    Args:
+        product_detail (ProductDetails): The product details to be updated.
+        data (ProductModel): The product details that will be updated with new product details.
+        db (Session): The database session.
+
+    Returns:
+        dict: A dictionary containing a success message and the updated product details.
+    """
 
     if product_detail.product_name:
         data.product_name = product_detail.product_name
@@ -38,7 +68,18 @@ def update_product_info(product_detail: ProductDetails, data, db):
     return {"message": "Product details updated successfully", "data": data}
 
 
-def delete_product_info(product_detail, db):
+def delete_product_info(product_detail: ProductModel, db: Session) -> dict[str, str]:
+    """
+    Deletes a product from the database.
+
+    Args:
+        product_detail (ProductModel): The product model object to be deleted.
+        db (Session): The database session.
+
+    Returns:
+        dict: A dictionary containing a success message.
+    """
+
     try:
         db.delete(product_detail)
         db.commit()

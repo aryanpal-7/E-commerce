@@ -6,6 +6,11 @@ class ProductDetails(BaseModel):
     price: float
     stock: int
 
+    class Config:
+        json_schema_extra = {
+            "example": {"product_name": "Iphone", "price": 999.9, "stock": 100}
+        }
+
 
 class ProductOut(BaseModel):
     product_name: str

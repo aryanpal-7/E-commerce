@@ -1,5 +1,5 @@
 # JWT generation, hash and verify password, current user logic
-from fastapi import Request, HTTPException, status, Depends
+from fastapi import Request, HTTPException, status, Depends, Response
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from jose import jwt, JWTError
@@ -14,14 +14,40 @@ ALGORITHM = "HS256"
 
 
 def hash_pwd(password: str) -> str:
+    """Hash the given password with a secure hash algorithm.
+
+    Args:
+        password (str): The password to hash.
+
+    Returns:
+        str: The hashed password.
+    """
     return pwd_context.hash(password)
 
 
-def verify_pwd(password: str, hashed_pwd):
+def verify_pwd(password: str, hashed_pwd: str) -> bool:
+    """Verify that the given password matches the hashed password.
+
+    Args:
+        password (str): The password to verify.
+        hashed_pwd (str): The hashed password to verify against.
+
+    Returns:
+        bool: True if the password matches the hashed password, False otherwise.
+    """
     return pwd_context.verify(password, hashed_pwd)
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict) -> str:
+    """Generate a JWT token for the given data.
+
+    Args:
+        data (dict): The data to encode in the JWT token.
+
+    Returns:
+        str: The JWT token.
+    """
+
     to_encode = data.copy()
     expire = datetime.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE)
     to_encode.update({"exp": expire})
@@ -29,7 +55,13 @@ def create_access_token(data: dict):
     return encode_jwt
 
 
-def set_access_token(response, token: str):
+def set_access_token(response: Response, token: str):
+    """Set the given JWT token as an HTTPOnly cookie in the response.
+
+    Args:
+        response (Response): The response to set the cookie in.
+        token (str): The JWT token to set as the cookie value.
+    """
     response.set_cookie(
         key="access_token",
         value=token,
@@ -40,7 +72,20 @@ def set_access_token(response, token: str):
     )
 
 
-def get_current_user(request: Request, db: Session = Depends(get_db)):
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> UserModel:
+    """Retrieve the current user based on the access token in the request cookies.
+
+    Args:
+        request (Request): The HTTP request containing the cookies.
+        db (Session): The database session dependency.
+
+    Returns:
+        UserModel: The user model instance corresponding to the token's subject.
+
+    Raises:
+        HTTPException: If the access token is missing, expired, invalid, or if the user is not found.
+    """
+
     token = request.cookies.get("access_token")
     if not token:
         raise HTTPException(
@@ -74,7 +119,15 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     return data
 
 
-def is_logged_in(request: Request):
+def is_logged_in(request: Request) -> dict[str, str] | None:
+    """Check if a user is already logged in.
+
+    Args:
+        request (Request): The HTTP request containing the cookies.
+
+    Returns:
+        dict[str, str] | None: The error message if the user is already logged in or None if the user is not logged in.
+    """
     token = request.cookies.get("access_token")
 
     if token:

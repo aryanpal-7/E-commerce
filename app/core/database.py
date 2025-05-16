@@ -9,6 +9,16 @@ Base = declarative_base()
 
 
 def get_db():
+    """
+    Provide a database session for the duration of a request.
+
+    This function is a generator that yields a SQLAlchemy session instance.
+    The session is closed automatically after use to ensure proper resource cleanup.
+
+    Yields:
+        Session: SQLAlchemy database session object.
+    """
+
     db = sessionLocal()
     try:
         yield db

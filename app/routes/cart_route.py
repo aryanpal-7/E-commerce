@@ -18,7 +18,7 @@ from app.services.cart_services import (
 from app.schemas.cart_schema import CartResponse, CartOut
 from typing import List
 
-router = APIRouter(prefix="/cart")
+router = APIRouter()
 
 
 @router.post("/add/{product_id}")
@@ -28,6 +28,18 @@ def add_cart_product(
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
+    """
+    Adds a product to the user's cart.
+
+    Args:
+        product_id (int): The id of the product to be added.
+        cart (CartDetails): The quantity of the product to be added.
+        db (Session): The database connection.
+        user (UserModel): The user model object.
+
+    Returns:
+        CartModel: The added product's row in the cart table.
+    """
     check_user(user.role)
 
     return validate_and_add_to_cart(user, cart.quantity, product_id, db)
@@ -37,6 +49,16 @@ def add_cart_product(
 def get_cart_items(
     user: UserModel = Depends(get_current_user), db: Session = Depends(get_db)
 ):
+    """
+    Returns the user's cart items and the total price of the items in the cart.
+
+    Args:
+        user (UserModel): The user model object.
+        db (Session): The database connection.
+
+    Returns:
+        CartResponse: The cart items and the total price of the items in the cart.
+    """
     check_user(user.role)
     data = cart_details(user, db)
     cart_items = [
@@ -63,6 +85,18 @@ def update_cart_items(
     user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """
+    Updates the quantity of a product in the user's cart.
+
+    Args:
+        product_id (int): The id of the product to be updated.
+        new_quantity (int): The new quantity of the product.
+        user (UserModel): The user model object.
+        db (Session): The database connection.
+
+    Returns:
+        CartModel: The updated product's row in the cart table.
+    """
     check_user(user.role)
 
     return update_cart(user, product_id, new_quantity, db)
@@ -74,6 +108,17 @@ def delete_cart_item(
     user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """
+    Deletes a product from the user's cart.
+
+    Args:
+        product_id (int): The id of the product to be deleted.
+        user (UserModel): The user model object.
+        db (Session): The database connection.
+
+    Returns:
+        dict: A dictionary containing a success message.
+    """
     check_user(user.role)
     return delete_cart_item_details(user, product_id, db)
 
@@ -82,6 +127,16 @@ def delete_cart_item(
 def order_cart_items(
     user: UserModel = Depends(get_current_user), db: Session = Depends(get_db)
 ):
+    """
+    Places an order for all items currently in the user's cart.
+
+    Args:
+        user (UserModel): The user model object.
+        db (Session): The database connection.
+
+    Returns:
+        dict: A dictionary with order details and a list of unavailable products.
+    """
 
     data = cart_details(user, db)
     product_ids = [item.product_id for item in data]

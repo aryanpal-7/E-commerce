@@ -1,13 +1,29 @@
 from app.models.users import UserModel
 from app.core.security import hash_pwd
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Response
 
 # from fastapi.responses import JSONResponse
-from app.schemas.user_schema import UserResponse
+from app.schemas.user_schema import UserResponse, UserRegister
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 
 
-def add_user(user, db):
+def add_user(user: UserRegister, db: Session) -> UserResponse:
+    """
+    Add a new user to the database.
+
+    Args:
+        user (UserRegister): The user registration data containing name, email, password, and role.
+        db (Session): The database session to use for the operation.
+
+    Returns:
+        UserResponse: An object containing the name and email of the newly added user.
+
+    Raises:
+        HTTPException: If there is an operational error during the database transaction,
+                       a 500 Internal Server Error is raised indicating a database connection issue.
+    """
+
     try:
         hashed_pwd = hash_pwd(user.password)
         data = UserModel(name=user.name, email=user.email, password=hashed_pwd)
@@ -26,6 +42,21 @@ def add_user(user, db):
 
 
 def update_users(user, data, db):
+    """
+    Update an existing user in the database.
+
+    Args:
+        user (UserLogin): The user update data containing email and password.
+        data (UserModel): The user model instance to update.
+        db (Session): The database session to use for the operation.
+
+    Returns:
+        UserResponse: An object containing the name and email of the updated user.
+
+    Raises:
+        HTTPException: If there is an internal server error during the database transaction,
+                       a 500 Internal Server Error is raised indicating a server error.
+    """
     try:
         if user.email:
             data.email = user.email
@@ -42,9 +73,27 @@ def update_users(user, data, db):
         )
 
 
-def delete_users(user_obj, response, db):
+def delete_users(
+    user_data: UserModel, response: Response, db: Session
+) -> dict[str, str]:
+    """
+    Delete a user from the database.
+
+    Args:
+        user_data (UserModel): The user model instance to delete.
+        response (Response): The response object to delete the access token cookie.
+        db (Session): The database session to use for the operation.
+
+    Returns:
+        dict[str, str]: A dictionary containing a success message.
+
+    Raises:
+        HTTPException: If there is an operational error during the database transaction,
+                       a 500 Internal Server Error is raised indicating a server error.
+    """
+
     try:
-        db.delete(user_obj)
+        db.delete(user_data)
         db.commit()
         response.delete_cookie("access_token")
         return {"message": "User Deleted Successfully."}
