@@ -9,7 +9,9 @@ from app.core.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ACCESS_TOKEN_EXPIRE = 30
+REFRESH_TOKEN_EXPIRE = 7
 SECRET_KEY = "secret"
+REFRESH_TOKEN_SECRET = "secretrefresh"
 ALGORITHM = "HS256"
 
 
@@ -55,6 +57,14 @@ def create_access_token(data: dict) -> str:
     return encode_jwt
 
 
+def create_refresh_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now() + timedelta(days=REFRESH_TOKEN_EXPIRE)
+    to_encode.update({"exp": expire})
+    encode_jwt = jwt.encode(to_encode, REFRESH_TOKEN_SECRET, algorithm=ALGORITHM)
+    return encode_jwt
+
+
 def set_access_token(response: Response, token: str):
     """Set the given JWT token as an HTTPOnly cookie in the response.
 
@@ -69,6 +79,25 @@ def set_access_token(response: Response, token: str):
         secure=False,
         samesite="lax",
         max_age=1800,
+    )
+
+
+def set_refresh_token(response: Response, token: str):
+    """
+    Set the given JWT refresh token as an HTTPOnly cookie in the response.
+
+    Args:
+        response (Response): The response to set the cookie in.
+        token (str): The JWT refresh token to set as the cookie value.
+    """
+
+    response.set_cookie(
+        key="refresh_token",
+        value=token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=7 * 24 * 60 * 60,
     )
 
 

@@ -2,11 +2,22 @@
 from fastapi import HTTPException, status, Response
 from app.models.users import UserModel
 from app.crud.users import add_user
-from app.core.security import verify_pwd, create_access_token, set_access_token
+from app.core.security import (
+    verify_pwd,
+    create_access_token,
+    create_refresh_token,
+    set_access_token,
+    set_refresh_token,
+)
 from sqlalchemy.exc import OperationalError
 from app.crud.users import delete_users
 from app.schemas.user_schema import UserRegister, UserLogin
 from sqlalchemy.orm import Session
+from jose import JWTError, jwt
+
+
+REFRESH_TOKEN_SECRET = "secretrefresh"
+ALGORITHM = "HS256"
 
 
 def raise_http(status_code: int, detail: str):
@@ -71,11 +82,48 @@ def login_user(user: UserLogin, response: Response, db: Session) -> dict[str, st
         if not check_pwd:
             raise_http(status.HTTP_400_BAD_REQUEST, "Password incorrect.")
         token = create_access_token(data=({"sub": str(data.id)}))
+        refresh_token = create_refresh_token(data=({"sub": str(data.id)}))
         set_access_token(response, token)
+        set_refresh_token(response, refresh_token)
+
         return {"message": "Login Successful"}
     except OperationalError:
         db.rollback()
         raise_http(status.HTTP_500_INTERNAL_SERVER_ERROR, "Database error.")
+
+
+def refresh_access_token(token: str, response: Response) -> dict[str, str]:
+    """
+    Refreshes the access token using a valid refresh token.
+
+    This function decodes the provided refresh token to extract the user ID,
+    and generates a new access token with refreshed expiration time. The new
+    access token is then set in the response cookies.
+
+    Args:
+        token (str): The refresh token to be decoded.
+        response (Response): The response object to set the new access token cookie.
+
+    Returns:
+        dict: A dictionary containing a success message indicating the access token has been refreshed.
+
+    Raises:
+        HTTPException: If the token payload is invalid or the refresh token is invalid,
+                       a 403 status code is raised with a detail message.
+    """
+
+    try:
+        payload = jwt.decode(token, REFRESH_TOKEN_SECRET, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise_http(status.HTTP_403_FORBIDDEN, "Invalid token payload.")
+
+        new_access_token = create_access_token({"sub": user_id})
+        set_access_token(response, new_access_token)
+
+        return {"message": "Access token refreshed"}
+    except JWTError:
+        raise_http(status.HTTP_403_FORBIDDEN, "Invalid refresh token.")
 
 
 def delete_user_account(
