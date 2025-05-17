@@ -3,9 +3,4 @@ __pycache__/
 env
 env/
 .env.*
-
-alembic
-alembic.ini
-.alembic
-/alembic
-/alembic.ini
+alembic/
