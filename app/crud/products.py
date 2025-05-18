@@ -2,9 +2,9 @@ from app.models.products import ProductModel
 from fastapi import HTTPException, status
 from app.schemas.product_schema import ProductDetails
 from sqlalchemy.orm import Session
+import os
 
-
-def add_product(product_detail: ProductModel, id: int, db: Session):
+def add_product(product_detail: ProductModel,image_path, id: int, db: Session):
     """
     Adds a new product to the database.
 
@@ -28,6 +28,7 @@ def add_product(product_detail: ProductModel, id: int, db: Session):
             stock=product_detail.stock,
             price=product_detail.price,
             owner_id=id,
+            image_path=image_path
         )
         db.add(data)
         db.commit()
@@ -69,20 +70,31 @@ def update_product_info(
 
 
 def delete_product_info(product_detail: ProductModel, db: Session) -> dict[str, str]:
+   
     """
     Deletes a product from the database.
 
     Args:
-        product_detail (ProductModel): The product model object to be deleted.
+        product_detail (ProductModel): The product details to be deleted.
         db (Session): The database session.
 
     Returns:
         dict: A dictionary containing a success message.
-    """
 
+    Raises:
+        HTTPException: If an error occurs while deleting the product, an HTTPException
+                       with a 500 status code is raised, indicating an internal server error.
+    """
+    
     try:
+        image_path = product_detail.image_path.replace("/", os.sep) if product_detail.image_path else None
         db.delete(product_detail)
         db.commit()
+        if image_path and os.path.exists(image_path):
+            try:
+                os.remove(image_path)
+            except Exception as e:
+                print("Cannot delete image.")
         return {"message": "product deleted Successfully"}
     except Exception as e:
         db.rollback()

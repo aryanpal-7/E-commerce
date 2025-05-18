@@ -12,7 +12,8 @@ class ProductModel(Base):
     owner_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-
+    image_path=Column(String, nullable=True)
+    
     admin = relationship("UserModel", back_populates="admin_id")
     cart = relationship("CartModel", back_populates="product")
     orderproduct = relationship("OrderModel", back_populates="product")

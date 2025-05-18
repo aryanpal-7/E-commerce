@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.schemas.product_schema import ProductDetails, ProductOut
@@ -7,7 +7,8 @@ from app.services.product_services import add_products, update_product, delete_p
 from app.models.products import ProductModel
 from app.core.security import get_current_user
 from app.models.users import UserModel
-from typing import List
+from typing import List, Optional
+from pydantic import ValidationError
 
 router = APIRouter()
 
@@ -74,19 +75,26 @@ def get_all_product(
 
 @router.post("/add")
 def add_products_info(
-    product_details: ProductDetails,
+    product_name: str =Form(...),
+    price: float=Form(...),
+    stock: int=Form(...),
+    image:Optional[UploadFile]=File(None),
     user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    
     """
     Adds a new product to the database.
 
-    This endpoint allows an admin user to add a new product to the system.
-    It checks that the user is an admin and validates the product details
-    before adding it.
+    This endpoint allows an admin user to add a new product by providing the product
+    name, price, stock, and optional image. It checks that the user is an admin and
+    validates the product details before adding the product to the database.
 
     Args:
-        product_details (ProductDetails): The details of the product to be added.
+        product_name (str): The name of the product.
+        price (float): The price of the product.
+        stock (int): The stock quantity of the product.
+        image (Optional[UploadFile]): An optional image file for the product.
         user (UserModel): The current user retrieved from the access token.
         db (Session): The database session dependency.
 
@@ -94,15 +102,25 @@ def add_products_info(
         dict: A dictionary containing a success message and the product details.
 
     Raises:
-        HTTPException: If the user is not an admin or if the product details are invalid.
+        HTTPException: If the user is not an admin, if the product details are invalid,
+        or if there is a validation error.
     """
 
     check_admin(user.role)
+    try:
+        product_details=ProductDetails(
+            product_name=product_name,
+            stock=stock,
+            price=price
+        )
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=e.errors())
+    
     validate_fields(
         product_details.product_name, product_details.price, product_details.stock
     )
 
-    return add_products(product_details, user.id, db)
+    return add_products(product_details, image, user.id, db)
 
 
 @router.put("/update/{product_id}")
