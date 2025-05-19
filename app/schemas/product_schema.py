@@ -2,16 +2,18 @@ from pydantic import BaseModel
 from typing import Optional
 from app.models.products import ProductModel
 import os
+
+
 class ProductDetails(BaseModel):
     product_name: str
     price: float
     stock: int
-    # product_image: Optional[str] = None
-     
-    # class Config:
-    #     json_schema_extra = {
-    #         "example": {"product_name": "Iphone", "price": 999.9, "stock": 100,"product_image":"image.jpg"}
-    #     }
+
+
+class UpdateProductDetails(BaseModel):
+    product_name: Optional[str]
+    price: Optional[float]
+    stock: Optional[int]
 
 
 class ProductOut(BaseModel):
@@ -20,8 +22,6 @@ class ProductOut(BaseModel):
     stock: int
     owner_id: int
     image_path: Optional[str] = None
-    
+
     class Config:
         from_attributes = True
-
-    

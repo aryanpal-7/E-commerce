@@ -1,7 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+    Query,
+    UploadFile,
+    File,
+    Form,
+)
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from app.schemas.product_schema import ProductDetails, ProductOut
+from app.schemas.product_schema import ProductDetails, ProductOut, UpdateProductDetails
 from app.core.database import get_db
 from app.services.product_services import add_products, update_product, delete_product
 from app.models.products import ProductModel
@@ -75,14 +84,13 @@ def get_all_product(
 
 @router.post("/add")
 def add_products_info(
-    product_name: str =Form(...),
-    price: float=Form(...),
-    stock: int=Form(...),
-    image:Optional[UploadFile]=File(None),
+    product_name: str = Form(...),
+    price: float = Form(...),
+    stock: int = Form(...),
+    image: Optional[UploadFile] = File(None),
     user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    
     """
     Adds a new product to the database.
 
@@ -108,14 +116,14 @@ def add_products_info(
 
     check_admin(user.role)
     try:
-        product_details=ProductDetails(
-            product_name=product_name,
-            stock=stock,
-            price=price
+        product_details = ProductDetails(
+            product_name=product_name, stock=stock, price=price
         )
     except ValidationError as e:
-        raise HTTPException(status_code=422, detail=e.errors())
-    
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors()
+        )
+
     validate_fields(
         product_details.product_name, product_details.price, product_details.stock
     )
@@ -126,36 +134,47 @@ def add_products_info(
 @router.put("/update/{product_id}")
 def update_product_info(
     product_id: int,
-    product_details: ProductDetails,
+    product_name: Optional[str] = Form(None),
+    price: Optional[int] = Form(None),
+    stock: Optional[int] = Form(None),
+    image: Optional[UploadFile] = File(None),
     user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    Updates a product in the database.
+    Updates the details of an existing product in the database.
 
-    This endpoint allows an admin user to update the details of an existing product.
-    It checks that the user is an admin and validates the product details before
-    updating the product.
+    This endpoint allows an admin user to update a product's information, including
+    its name, price, stock, and image. It checks that the user is an admin and
+    validates the provided fields before updating the product.
 
     Args:
-        product_id (int): The id of the product to be updated.
-        product_details (ProductDetails): The details of the product to be updated.
+        product_id (int): The ID of the product to be updated.
+        product_name (Optional[str]): The new name of the product.
+        price (Optional[int]): The new price of the product.
+        stock (Optional[int]): The new stock quantity of the product.
+        image (Optional[UploadFile]): An optional new image file for the product.
         user (UserModel): The current user retrieved from the access token.
-        db (Session): The database session dependency.
+        db (Session): The database session to use for the operation.
 
     Returns:
         dict: A dictionary containing a success message and the updated product details.
 
     Raises:
-        HTTPException: If the user is not an admin or if the product details are invalid.
+        HTTPException: If the user is not an admin or if there is a validation error.
     """
 
+    try:
+        product_details = UpdateProductDetails(
+            product_name=product_name, price=price, stock=stock
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unprocessable Entity.Aryan",
+        )
     check_admin(user.role)
-    validate_fields(
-        product_details.product_name, product_details.price, product_details.stock
-    )
-
-    return update_product(product_details, product_id, db)
+    return update_product(product_details, image, product_id, db)
 
 
 @router.delete("/delete/{product_id}")
