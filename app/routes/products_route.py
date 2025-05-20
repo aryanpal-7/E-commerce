@@ -8,6 +8,7 @@ from fastapi import (
     File,
     Form,
 )
+from sqlalchemy import or_, and_, asc, desc
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.schemas.product_schema import ProductDetails, ProductOut, UpdateProductDetails
@@ -59,26 +60,89 @@ def validate_fields(product_name: str, price: float, stock: int):
         )
 
 
+def price_filter(min_price: float | None, max_price: float | None, query: Session):
+    """
+    Filters the products based on their price.
+
+    Args:
+        min_price (float|None): The minimum price.
+        max_price (float|None): The maximum price.
+        query (Session): The database query.
+
+    Returns:
+        Session: The filtered database query.
+
+    Raises:
+        HTTPException: If the minimum price is greater than the maximum price.
+    """
+    if min_price is not None:
+        query = query.filter(ProductModel.price >= min_price)
+    if max_price is not None:
+        query = query.filter(ProductModel.price <= max_price)
+    if min_price is not None and max_price is not None and min_price == max_price:
+        query = query.filter(ProductModel.price == min_price)
+    if min_price is not None and max_price is not None and min_price > max_price:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minimum price cannot be greater than maximum price.",
+        )
+    return query
+
+
+def sort_filter(sort_by: str, query):
+    """
+    Sorts the products based on the given criteria.
+
+    Args:
+        sort_by (str): The sorting criteria. Available options are "price_asc" and "price_desc".
+        query (Session): The database query.
+
+    Returns:
+        Session: The sorted database query.
+    """
+    if sort_by == "price_asc":
+        query = query.order_by(asc(ProductModel.price))
+    if sort_by == "price_desc":
+        query = query.order_by(desc(ProductModel.price))
+    return query
+
+
 @router.get("/all", response_model=List[ProductOut])
 def get_all_product(
+    search: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    sort_by: Optional[str] = Query(None, regex="^(price_asc|price_desc)$"),
     limit: int = Query(10, gt=0),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
     """
-    Retrieves all products from the database.
+    Retrieve a list of products that match the given criteria.
 
     Args:
-        limit (int): The maximum number of products to return. Defaults to 10.
-        offset (int): The number of products to skip before returning. Defaults to 0.
-        db (Session): The database session.
+        search (str, optional): A search string to filter by product name or description.
+        min_price (float, optional): The minimum price to filter by.
+        max_price (float, optional): The maximum price to filter by.
+        sort_by (str, optional): The field to sort by. Defaults to None.
+        limit (int, optional): The number of products to return. Defaults to 10.
+        offset (int, optional): The number of products to skip. Defaults to 0.
 
     Returns:
-        List[ProductOut]: A list of products.
-
+        List[ProductOut]: A list of products that match the given criteria.
     """
+    query = db.query(ProductModel)
+    if search:
+        query = query.filter(
+            or_(
+                ProductModel.product_name.ilike(f"%{search}%"),
+                ProductModel.description.ilike(f"{search}"),
+            )
+        )
 
-    data = db.query(ProductModel).offset(offset).limit(limit).all()
+    query = price_filter(min_price=min_price, max_price=max_price, query=query)
+    query = sort_filter(sort_by=sort_by, query=query)
+    data = query.offset(offset).limit(limit).all()
     return data
 
 
@@ -87,6 +151,7 @@ def add_products_info(
     product_name: str = Form(...),
     price: float = Form(...),
     stock: int = Form(...),
+    description: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -117,7 +182,7 @@ def add_products_info(
     check_admin(user.role)
     try:
         product_details = ProductDetails(
-            product_name=product_name, stock=stock, price=price
+            product_name=product_name, stock=stock, price=price, description=description
         )
     except ValidationError as e:
         raise HTTPException(
@@ -137,6 +202,7 @@ def update_product_info(
     product_name: Optional[str] = Form(None),
     price: Optional[int] = Form(None),
     stock: Optional[int] = Form(None),
+    description: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -166,7 +232,7 @@ def update_product_info(
 
     try:
         product_details = UpdateProductDetails(
-            product_name=product_name, price=price, stock=stock
+            product_name=product_name, price=price, stock=stock, description=description
         )
     except ValidationError as e:
         raise HTTPException(

@@ -9,6 +9,7 @@ class ProductModel(Base):
     product_name = Column(String, nullable=False)
     stock = Column(Integer, nullable=False)
     price = Column(FLOAT, nullable=False)
+    description = Column(String, nullable=True)
     owner_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )

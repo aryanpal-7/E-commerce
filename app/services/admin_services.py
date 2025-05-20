@@ -1,7 +1,13 @@
 from fastapi import status, HTTPException, Response
 from app.models.users import UserModel
 from app.crud.users import add_user
-from app.core.security import create_access_token, set_access_token
+from app.core.security import (
+    create_access_token,
+    set_access_token,
+    create_refresh_token,
+    set_refresh_token,
+    verify_pwd,
+)
 from app.schemas.user_schema import AdminSchema, UserLogin, UserResponse
 from sqlalchemy.orm import Session
 
@@ -59,6 +65,13 @@ def login_admin(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Admin doesn't Exists."
         )
+    check_pwd = verify_pwd(admin_data.password, data.password)
+    if not check_pwd:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect Password."
+        )
     token = create_access_token(dict({"sub": str(data.id)}))
+    refresh_token = create_refresh_token(dict({"sub": str(data.id)}))
     set_access_token(response, token)
+    set_refresh_token(response, refresh_token)
     return {"message": "Admin Logged in Successfully."}

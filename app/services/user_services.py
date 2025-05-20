@@ -80,7 +80,7 @@ def login_user(user: UserLogin, response: Response, db: Session) -> dict[str, st
             raise_http(status.HTTP_404_NOT_FOUND, "User doesn't exists.")
         check_pwd = verify_pwd(user.password, data.password)
         if not check_pwd:
-            raise_http(status.HTTP_400_BAD_REQUEST, "Password incorrect.")
+            raise_http(status.HTTP_401_UNAUTHORIZED, "Password incorrect.")
         token = create_access_token(data=({"sub": str(data.id)}))
         refresh_token = create_refresh_token(data=({"sub": str(data.id)}))
         set_access_token(response, token)
